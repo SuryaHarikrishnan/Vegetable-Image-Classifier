@@ -4,9 +4,11 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
+# ------------------------------
 # CNN Model
+# ------------------------------
 class SmallCNN(nn.Module):
-    def __init__(self):
+    def __init__(self, num_classes):
         super().__init__()
 
         self.conv = nn.Sequential(
@@ -21,8 +23,7 @@ class SmallCNN(nn.Module):
 
         self.fc = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(64 * 32 * 32, 1),
-            nn.Sigmoid()
+            nn.Linear(64 * 32 * 32, num_classes)  # num_classes is passed dynamically
         )
 
     def forward(self, x):
@@ -30,82 +31,101 @@ class SmallCNN(nn.Module):
         x = self.fc(x)
         return x
 
-
-def train_model():
+# ------------------------------
+# Training function
+# ------------------------------
+def train_model(quick_test=False):
+    """
+    quick_test=True -> train for 1 epoch (faster for pytest)
+    quick_test=False -> full training
+    """
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+    # ------------------------------
+    # Transforms and Data
+    # ------------------------------
     transform = transforms.Compose([
         transforms.Resize((128,128)),
         transforms.ToTensor()
     ])
 
-    train_data = datasets.ImageFolder("data/train", transform=transform)
-    val_data = datasets.ImageFolder("data/validation", transform=transform)
-    test_data = datasets.ImageFolder("data/test", transform=transform)
+    train_data = datasets.ImageFolder("dataset/labeled/train", transform=transform)
+    val_data = datasets.ImageFolder("dataset/labeled/val", transform=transform)
+    test_data = datasets.ImageFolder("dataset/labeled/test", transform=transform)
+
+    num_classes = len(train_data.classes)  # auto-detect number of classes
+    print("Classes:", train_data.classes)
+    print("Number of classes:", num_classes)
 
     train_loader = DataLoader(train_data, batch_size=16, shuffle=True)
-    val_loader = DataLoader(val_data, batch_size=16)
-    test_loader = DataLoader(test_data, batch_size=16)
+    val_loader   = DataLoader(val_data, batch_size=16)
+    test_loader  = DataLoader(test_data, batch_size=16)
 
-    model = SmallCNN().to(device)
-
-    criterion = nn.BCELoss()
+    # ------------------------------
+    # Model, Loss, Optimizer
+    # ------------------------------
+    model = SmallCNN(num_classes).to(device)
+    criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.002)
 
-    history = {
-        "train_loss": [],
-        "validation_loss": [],
-        "validation_acc": []
-    }
-
-    epochs = 3
+    # ------------------------------
+    # Training loop
+    # ------------------------------
+    history = {"train_loss": [], "validation_loss": [], "validation_acc": []}
+    epochs = 1 if quick_test else 3
 
     for epoch in range(epochs):
-
         model.train()
         running_loss = 0
 
         for images, labels in train_loader:
-
-            images = images.to(device)
-            labels = labels.float().unsqueeze(1).to(device)
+            images, labels = images.to(device), labels.to(device)
 
             optimizer.zero_grad()
-
             outputs = model(images)
-
             loss = criterion(outputs, labels)
-
             loss.backward()
-
             optimizer.step()
 
             running_loss += loss.item()
 
         train_loss = running_loss / len(train_loader)
-
         history["train_loss"].append(train_loss)
 
-    # Simple test accuracy
+        # Validation
+        model.eval()
+        val_loss = 0
+        correct = 0
+        total = 0
 
+        with torch.no_grad():
+            for images, labels in val_loader:
+                images, labels = images.to(device), labels.to(device)
+                outputs = model(images)
+                loss = criterion(outputs, labels)
+                val_loss += loss.item()
+
+                preds = torch.argmax(outputs, dim=1)
+                correct += (preds.cpu() == labels.cpu()).sum().item()
+                total += labels.size(0)
+
+        history["validation_loss"].append(val_loss / len(val_loader))
+        history["validation_acc"].append(correct / total)
+
+    # ------------------------------
+    # Test Accuracy
+    # ------------------------------
     model.eval()
-
     correct = 0
     total = 0
 
     with torch.no_grad():
-
         for images, labels in test_loader:
-
             images = images.to(device)
-
             outputs = model(images)
-
-            preds = (outputs > 0.5).float().cpu()
-
-            correct += (preds.squeeze() == labels).sum().item()
-
+            preds = torch.argmax(outputs, dim=1).cpu()
+            correct += (preds == labels).sum().item()
             total += labels.size(0)
 
     test_acc = correct / total
