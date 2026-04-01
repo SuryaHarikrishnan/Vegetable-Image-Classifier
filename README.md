@@ -2,19 +2,17 @@
 
 ## Overview
 
-This project focuses on building a machine learning model to classify vegetables from images. The goal is to develop a reliable and efficient system that can accurately identify different vegetable categories based on visual features.
-
-The project emphasizes clean implementation, proper data handling, and improving model performance through iterative training and evaluation.
+This project builds a machine learning model to classify vegetables from images. It focuses on clean implementation, structured data handling, and improving model performance through training and evaluation.
 
 ---
 
 ## Features
 
 * Multi-class image classification
-* Image preprocessing and normalization
-* Model training and evaluation
-* Performance analysis using standard metrics
-* Modular and extensible code structure
+* Organized dataset with train / validation / test splits
+* Image preprocessing and model training
+* Evaluation using test data
+* Simple and modular code structure
 
 ---
 
@@ -23,34 +21,61 @@ The project emphasizes clean implementation, proper data handling, and improving
 * Python
 * NumPy
 * OpenCV
-* TensorFlow / PyTorch (depending on implementation)
+* PyTorch / TensorFlow (depending on implementation)
 
 ---
 
 ## Project Structure
 
 ```
-Vegetable-Image-Classifier/
-│── data/               # Dataset (training / testing images)
-│── src/                # Source code
-│   ├── preprocessing.py
-│   ├── model.py
-│   ├── train.py
-│   └── evaluate.py
-│── notebooks/          # Experiments and exploration
-│── results/            # Model outputs and metrics
+VEGETABLE-IMAGE-CLASSIFIER/
+│── dataset/
+│   ├── labeled/
+│   │   ├── train/        # Training images
+│   │   ├── val/          # Validation images
+│   │   └── test/         # Test images
+│   └── unlabeled/        # Unlabeled images (for future use)
+│
+│── model.py              # Model definition
+│── test_model.py         # Model evaluation / testing
+│── requirements.txt      # Dependencies
 │── README.md
+│
+│── __pycache__/          # Python cache files
+│── .pytest_cache/        # Test cache files
 ```
 
 ---
 
 ## Approach
 
-1. Collect and organize labeled image data
-2. Apply preprocessing (resizing, normalization, augmentation)
+1. Load labeled dataset (train / val / test)
+2. Preprocess images (resize, normalize)
 3. Train classification model
-4. Evaluate performance using accuracy and other metrics
-5. Iterate to improve generalization and robustness
+4. Validate performance during training
+5. Evaluate final model on test set
+
+---
+
+## How to Run
+
+### 1. Install dependencies
+
+```
+pip install -r requirements.txt
+```
+
+### 2. Train the model
+
+```
+python model.py
+```
+
+### 3. Test the model
+
+```
+python test_model.py
+```
 
 ---
 
@@ -58,24 +83,24 @@ Vegetable-Image-Classifier/
 
 🚧 In Progress
 
-* Building baseline model
-* Experimenting with different architectures
-* Improving dataset quality and preprocessing
+* Building baseline classification model
+* Testing performance on validation and test sets
+* Improving accuracy and generalization
 
 ---
 
 ## Future Improvements
 
+* Data augmentation
 * Hyperparameter tuning
-* Data augmentation techniques
-* Model optimization for better accuracy
-* Deployment as a simple web application
+* Model architecture improvements
+* Use of unlabeled data
+* Deployment as a simple application
 
 ---
 
 ## Goals
 
-* Achieve high classification accuracy across multiple vegetable categories
-* Build a clean and reusable image classification pipeline
-* Strengthen understanding of computer vision and model optimization
-
+* Build a reliable vegetable classification model
+* Maintain a clean and structured ML workflow
+* Improve performance through iterative development
